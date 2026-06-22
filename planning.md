@@ -158,8 +158,8 @@ Return Session
 ## AI Tool Plan
 
 ### Milestone 3 — Individual tool implementations:
+For each tool I will paste its spec block from this planning.md (inputs, return value, failure mode) into Claude and ask it to implement that one function using `load_listings()` or the Groq API as appropriate. Before using any generated code I will check: does it filter by all three parameters? Does it handle the failure mode I described? Then I will test it with at least 3 inputs including the failure case.
 
-I will use ChatGPT (or Groq API) to help implement each tool function based on the specifications in this planning document. I will provide:
 
 - tool input/output specs  
 - dataset structure  
@@ -175,7 +175,7 @@ I will validate correctness by testing:
 
 ### Milestone 4 — Planning loop and state management:
 
-I will use ChatGPT to verify that my `agent.py` logic matches this planning document exactly. I will manually trace session state updates step-by-step and ensure each tool is called in correct order.
+I will paste the Planning Loop section and Architecture diagram into Claude and ask it to implement `run_agent()` in `agent.py`. Before using the output I will check: does it branch on empty search results? Does it store values in the session dict at each step? Does it avoid calling all three tools unconditionally?
 
 ---
 
