@@ -116,10 +116,9 @@ Each tool reads from and writes to this shared state object, ensuring a linear f
 
 | Tool | Failure mode | Agent response |
 |------|-------------|----------------|
-| search_listings | No results match query | Set `session["error"]` and stop execution |
-| suggest_outfit | Wardrobe is empty | Generate general styling advice using LLM |
-| create_fit_card | Outfit missing or invalid | Return error string and stop LLM call |
-
+| search_listings | No results match query | Sets `session["error"]` = "No matching listings found. Try a different description, remove the size filter, or increase your max price." Stops execution immediately, does not call further tools. |
+| suggest_outfit | Wardrobe is empty | Calls LLM with general styling prompt instead of wardrobe-specific one. Returns general outfit advice — does not crash. |
+| create_fit_card | Outfit string is empty or whitespace | Returns "Unable to generate fit card — outfit description was empty." without calling the LLM. |
 ---
 
 ## Architecture
@@ -158,18 +157,7 @@ Return Session
 ## AI Tool Plan
 
 ### Milestone 3 — Individual tool implementations:
-For each tool I will paste its spec block from this planning.md (inputs, return value, failure mode) into Claude and ask it to implement that one function using `load_listings()` or the Groq API as appropriate. Before using any generated code I will check: does it filter by all three parameters? Does it handle the failure mode I described? Then I will test it with at least 3 inputs including the failure case.
-
-
-- tool input/output specs  
-- dataset structure  
-- example listings and wardrobe  
-
-I will validate correctness by testing:
-
-- normal query (vintage tee under $30)  
-- size-filtered query  
-- no-match edge case  
+For each tool I will paste its spec block from this planning.md (inputs, return value, failure mode) into Claude and ask it to implement that one function using `load_listings()` or the Groq API as appropriate. Before using any generated code I will check: does it filter by all three parameters? Does it handle the failure mode I described? Then I will test it with at least 3 inputs including the failure case. 
 
 ---
 
