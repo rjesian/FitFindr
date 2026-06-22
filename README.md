@@ -70,31 +70,27 @@ Your README submission must document each tool's name, inputs, and return value.
 
 ## Interaction Walkthrough
 
-<!-- Walk through a complete interaction step by step: natural language query → each tool call (and why) → final fit card.
-     Walk through this carefully — it's how graders follow your agent's reasoning without a live demo.
-     Use a specific example — do not leave this as a template. -->
-
-**User query:**
+**User query:** "vintage graphic tee under $30"
 
 **Step 1 — Tool called:**
-- Tool:
-- Input:
-- Why this tool:
-- Output:
+- Tool: `search_listings`
+- Input: `description="vintage graphic tee"`, `size=None`, `max_price=30.0`
+- Why this tool: Always called first to find matching listings before anything else can happen
+- Output: List of listings sorted by relevance. Top result: "Y2K Baby Tee — Butterfly Print", $18, depop
 
 **Step 2 — Tool called:**
-- Tool:
-- Input:
-- Why this tool:
-- Output:
+- Tool: `suggest_outfit`
+- Input: `new_item=<Y2K Baby Tee dict>`, `wardrobe=<example wardrobe>`
+- Why this tool: Called only because Step 1 returned results — uses the top listing and the user's wardrobe to generate outfit ideas
+- Output: "Pair the Y2K Baby Tee with your baggy straight-leg jeans and chunky white sneakers..."
 
 **Step 3 — Tool called:**
-- Tool:
-- Input:
-- Why this tool:
-- Output:
+- Tool: `create_fit_card`
+- Input: `outfit=<suggestion from Step 2>`, `new_item=<Y2K Baby Tee dict>`
+- Why this tool: Called last, after an outfit suggestion exists — converts it into a shareable caption
+- Output: "I'm obsessed with this Y2K Baby Tee I scored on depop for $18..."
 
-**Final output to user:**
+**Final output to user:** All three panels populate — listing details, outfit suggestion, and fit card caption.
 
 ---
 
@@ -105,26 +101,29 @@ Your README submission must document each tool's name, inputs, and return value.
 
 | Tool | Failure mode | Agent response |
 |------|-------------|----------------|
-| `search_listings` | | |
-| `suggest_outfit` | | |
-| `create_fit_card` | | |
+| `search_listings` | No listings match the query | Sets `session["error"]` = "No matching listings found. Try a different description, remove the size filter, or increase your max price." Returns session immediately without calling further tools. |
+| `suggest_outfit` | Wardrobe is empty (`wardrobe["items"]` is `[]`) | Calls LLM with a general styling prompt instead of a wardrobe-specific one. Returns general outfit advice — does not crash or return empty string. |
+| `create_fit_card` | `outfit` string is empty or whitespace | Returns "Unable to generate fit card — outfit description was empty." without calling the LLM. |
 
+**Example from testing:**
+```bash
+python3 -c "
+from tools import search_listings, create_fit_card
+results = search_listings('vintage graphic tee', size=None, max_price=50)
+print(create_fit_card('', results[0]))
+"
+# Output: Unable to generate fit card — outfit description was empty.
+```
 ---
 
 ## Spec Reflection
 
 <!-- Answer both questions with at least 2–3 sentences each. -->
 
-**One way planning.md helped during implementation:**
 
-**One divergence from your spec, and why:**
+Writing the conditional logic for the planning loop in plain English before touching `agent.py` made the implementation straightforward. The spec described exactly what to check (`if not results`) and what to do in each branch, so the code in `run_agent()` mapped almost directly to what was written in `planning.md`. Without that, it would have been easy to accidentally call `suggest_outfit` with empty input and get a confusing error instead of a clean failure message.
+
+
+The original spec described size matching as exact string equality with no fuzzy matching. The starter repo's docstring suggested case-insensitive partial matching where "M" would match "S/M". I kept exact matching but added case-insensitivity so that "m" and "M" both work, while still rejecting "S/M" as a non-match. This was a deliberate override of the starter's suggested behavior — exact matching is more predictable and makes the no-results error path meaningful rather than silently returning wrong results.
 
 ---
-
-## Where to Start
-
-1. **Read `planning.md` and fill it out before writing any code.**
-2. Verify the data loads correctly by running `python utils/data_loader.py`.
-3. Build and test each tool individually before connecting them through your planning loop.
-
-Your implementation files go in this same directory. There's no required file structure for your agent code — organize it however makes sense for your design.
